@@ -54,7 +54,7 @@ A full user account management system with the following features:
 - Email uniqueness enforced at both DB and application level
 
 ## Project Structure
-'''
+```
 Coast/
 ├── pom.xml
 └── src/
@@ -85,7 +85,7 @@ Coast/
         │                   └── Validator.java
         └── resources/
             └── config.properties
-'''
+```
 
 ## Notes
 
