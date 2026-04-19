@@ -4,10 +4,8 @@ import okhttp3.*;
 import com.google.gson.*;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 public class SupabaseClient {
 
@@ -17,15 +15,8 @@ public class SupabaseClient {
     private static final String SUPABASE_API_KEY;
 
     static {
-        try (InputStream input = SupabaseClient.class
-                .getClassLoader().getResourceAsStream("config.properties")) {
-            Properties props = new Properties();
-            props.load(input);
-            SUPABASE_URL     = props.getProperty("SUPABASE_URL");
-            SUPABASE_API_KEY = props.getProperty("SUPABASE_API_KEY");
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load config.properties", e);
-        }
+        SUPABASE_URL     = SecretsManager.getSupabaseUrl();
+        SUPABASE_API_KEY = SecretsManager.getSupabaseApiKey();
     }
 
     private SupabaseClient() {}
