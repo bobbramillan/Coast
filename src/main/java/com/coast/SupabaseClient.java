@@ -11,29 +11,20 @@ public class SupabaseClient {
 
     private static final OkHttpClient httpClient = new OkHttpClient();
     private static final Gson gson = new Gson();
-    private static final String SUPABASE_URL;
-    private static final String SUPABASE_API_KEY;
-
-    static {
-        SUPABASE_URL     = SecretsManager.getSupabaseUrl();
-        SUPABASE_API_KEY = SecretsManager.getSupabaseApiKey();
-    }
+    private static final String BASE_URL = "https://zw4lbcamf5.execute-api.us-east-1.amazonaws.com/prod";
 
     private SupabaseClient() {}
 
     private static Request.Builder baseRequest(String url) {
         return new Request.Builder()
                 .url(url)
-                .addHeader("apikey", SUPABASE_API_KEY)
-                .addHeader("Authorization", "Bearer " + SUPABASE_API_KEY)
                 .addHeader("Content-Type", "application/json");
     }
 
     // ── Fetch ─────────────────────────────────────────────────────────────────
 
     public static List<String> fetchExistingUserIds() throws IOException {
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users?select=user_id")
-                .get().build();
+        Request request = baseRequest(BASE_URL + "/fetch-existing-user-ids").get().build();
 
         try (Response response = httpClient.newCall(request).execute()) {
             String body = response.body().string();
@@ -48,7 +39,7 @@ public class SupabaseClient {
     }
 
     public static User fetchUserByEmail(String email) throws IOException {
-        String url = SUPABASE_URL + "/rest/v1/users?email=eq." + email + "&select=*";
+        String url = BASE_URL + "/fetch-user-by-email?email=" + email;
         Request request = baseRequest(url).get().build();
 
         try (Response response = httpClient.newCall(request).execute()) {
@@ -78,13 +69,13 @@ public class SupabaseClient {
     }
 
     public static boolean emailExists(String email) throws IOException {
-        String url = SUPABASE_URL + "/rest/v1/users?email=eq." + email + "&select=user_id";
+        String url = BASE_URL + "/email-exists?email=" + email;
         Request request = baseRequest(url).get().build();
 
         try (Response response = httpClient.newCall(request).execute()) {
             String body = response.body().string();
             if (!response.isSuccessful()) throw new IOException(body);
-            return JsonParser.parseString(body).getAsJsonArray().size() > 0;
+            return JsonParser.parseString(body).getAsJsonObject().get("exists").getAsBoolean();
         }
     }
 
@@ -101,9 +92,7 @@ public class SupabaseClient {
             json.addProperty("about", user.getAbout());
 
         RequestBody body = RequestBody.create(gson.toJson(json), MediaType.parse("application/json"));
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users")
-                .addHeader("Prefer", "return=minimal")
-                .post(body).build();
+        Request request = baseRequest(BASE_URL + "/insert-user").post(body).build();
 
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) throw new IOException(response.body().string());
@@ -112,96 +101,58 @@ public class SupabaseClient {
 
     // ── Update ────────────────────────────────────────────────────────────────
 
-    public static void updateLastSignIn(String userId) throws IOException {
-        JsonObject json = new JsonObject();
-        json.addProperty("last_sign_in", java.time.Instant.now().toString());
-
+    private static void patch(String userId, JsonObject json) throws IOException {
+        String url = BASE_URL + "/update-user?user_id=" + userId;
         RequestBody body = RequestBody.create(gson.toJson(json), MediaType.parse("application/json"));
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users?user_id=eq." + userId)
-                .addHeader("Prefer", "return=minimal")
-                .patch(body).build();
+        Request request = baseRequest(url).patch(body).build();
 
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) throw new IOException(response.body().string());
         }
+    }
+
+    public static void updateLastSignIn(String userId) throws IOException {
+        JsonObject json = new JsonObject();
+        json.addProperty("last_sign_in", java.time.Instant.now().toString());
+        patch(userId, json);
     }
 
     public static void updateLastSignOut(String userId) throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("last_sign_out", java.time.Instant.now().toString());
-
-        RequestBody body = RequestBody.create(gson.toJson(json), MediaType.parse("application/json"));
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users?user_id=eq." + userId)
-                .addHeader("Prefer", "return=minimal")
-                .patch(body).build();
-
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException(response.body().string());
-        }
+        patch(userId, json);
     }
 
     public static void updateName(String userId, String name) throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("name", name);
-
-        RequestBody body = RequestBody.create(gson.toJson(json), MediaType.parse("application/json"));
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users?user_id=eq." + userId)
-                .addHeader("Prefer", "return=minimal")
-                .patch(body).build();
-
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException(response.body().string());
-        }
+        patch(userId, json);
     }
 
     public static void updateEmail(String userId, String email) throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("email", email);
-
-        RequestBody body = RequestBody.create(gson.toJson(json), MediaType.parse("application/json"));
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users?user_id=eq." + userId)
-                .addHeader("Prefer", "return=minimal")
-                .patch(body).build();
-
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException(response.body().string());
-        }
+        patch(userId, json);
     }
 
     public static void updatePassword(String userId, String password) throws IOException {
         JsonObject json = new JsonObject();
         json.addProperty("password", password);
-
-        RequestBody body = RequestBody.create(gson.toJson(json), MediaType.parse("application/json"));
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users?user_id=eq." + userId)
-                .addHeader("Prefer", "return=minimal")
-                .patch(body).build();
-
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException(response.body().string());
-        }
+        patch(userId, json);
     }
 
     public static void updateAbout(String userId, String about) throws IOException {
         JsonObject json = new JsonObject();
         if (about != null) json.addProperty("about", about);
         else json.add("about", JsonNull.INSTANCE);
-
-        RequestBody body = RequestBody.create(gson.toJson(json), MediaType.parse("application/json"));
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users?user_id=eq." + userId)
-                .addHeader("Prefer", "return=minimal")
-                .patch(body).build();
-
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException(response.body().string());
-        }
+        patch(userId, json);
     }
 
     // ── Delete ────────────────────────────────────────────────────────────────
 
     public static void deleteUser(String userId) throws IOException {
-        Request request = baseRequest(SUPABASE_URL + "/rest/v1/users?user_id=eq." + userId)
-                .delete().build();
+        String url = BASE_URL + "/update-user?user_id=" + userId;
+        Request request = baseRequest(url).delete().build();
 
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) throw new IOException(response.body().string());
