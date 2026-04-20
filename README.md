@@ -204,7 +204,7 @@ sensitive logic and credentials inside AWS, completely separate from the distrib
 
 ## Where To Go Next
 
-- **Spring Boot** — replace the raw Lambda handlers with a proper REST framework
+- **Spring Boot on EC2** — replace the raw Lambda handlers with a proper REST framework
 - **Docker** — containerize Coast for even easier distribution
 - **CI/CD with GitHub Actions** — auto-deploy CoastBackend to AWS on every push to main
 - **Frontend** — build a web or mobile client that connects to the same Lambda backend
