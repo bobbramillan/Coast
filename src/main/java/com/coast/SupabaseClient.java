@@ -151,9 +151,8 @@ public class SupabaseClient {
     // ── Delete ────────────────────────────────────────────────────────────────
 
     public static void deleteUser(String userId) throws IOException {
-        String url = BASE_URL + "/update-user?user_id=" + userId;
+        String url = BASE_URL + "/delete-user?user_id=" + userId;
         Request request = baseRequest(url).delete().build();
-
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) throw new IOException(response.body().string());
         }
