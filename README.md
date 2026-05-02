@@ -1,3 +1,13 @@
+## Latest Updates
+
+- **Web App** — Coast is now available at https://coast-web-bav.vercel.app/
+- **CI/CD** — CoastBackend auto-deploys to AWS Lambda on every push to main via GitHub Actions
+- **AWS Lambda + API Gateway** — all database operations moved to serverless backend, no credentials in the JAR
+- **SHA-256 password hashing** — passwords hashed with user_id as salt, never stored plain text
+- **deleteUser bug fix** — delete account now correctly calls /delete-user endpoint
+
+---
+
 # Coast
 
 A terminal-based Java social media account management system, built from scratch in a single session.
@@ -148,10 +158,22 @@ The architecture:
   `IAMFullAccess`, `AWSLambda_FullAccess`, `AmazonAPIGatewayAdministrator`
 - zsh interpreted `*` in ARNs as a wildcard — solved by wrapping ARNs in quotes
 - Lambda cold starts cause slight latency on first call — acceptable for a terminal app
+- CORS required OPTIONS preflight configuration on API Gateway plus headers in every Lambda response
 
 **Why Lambda over running the backend locally?**
 If credentials lived in the JAR, anyone could decompile it and extract them. Lambda keeps all
 sensitive logic and credentials inside AWS, completely separate from the distributed JAR.
+
+### 10. CI/CD with GitHub Actions
+CoastBackend deploys automatically on every push to main. The workflow builds the fat JAR with
+Maven and redeploys all six Lambda functions using the AWS CLI. AWS credentials are stored as
+GitHub secrets — never in code.
+
+### 11. Coast Web App
+A browser-based version of Coast built as a separate static site deployed to Vercel at
+https://coast-web-bav.vercel.app/. Replicates the full terminal app feature set with a terminal
+aesthetic using JetBrains Mono and green-on-black. SHA-256 hashing is done in the browser using
+the native `crypto.subtle` API, matching the Java implementation exactly.
 
 ---
 
@@ -176,7 +198,9 @@ sensitive logic and credentials inside AWS, completely separate from the distrib
 - Secrets Manager for credential storage
 - Lambda functions with Java 17 runtime
 - API Gateway resources, methods, integrations, and deployments
+- CORS configuration at both API Gateway and Lambda response level
 - Lambda cold starts and how to mitigate them
+- CI/CD with GitHub Actions for automated Lambda deployment
 
 ### Security
 - Why plain text passwords are dangerous
@@ -199,15 +223,24 @@ sensitive logic and credentials inside AWS, completely separate from the distrib
 | AWS Lambda | Serverless backend functions |
 | AWS API Gateway | Public HTTPS endpoints for Lambda |
 | SHA-256 | Password hashing |
+| GitHub Actions | CI/CD for CoastBackend |
+| HTML / CSS / JS | Coast web app |
+| Vercel | Web app hosting |
+
+---
+
+## Live
+
+- **Web App:** https://coast-web-bav.vercel.app/
+- **Backend:** https://zw4lbcamf5.execute-api.us-east-1.amazonaws.com/prod
+- **CoastBackend (private):** https://github.com/bobbramillan/CoastBackend
 
 ---
 
 ## Where To Go Next
 
 - **Spring Boot on EC2** — replace the raw Lambda handlers with a proper REST framework
-- **Docker** — containerize Coast for even easier distribution
-- **CI/CD with GitHub Actions** — auto-deploy CoastBackend to AWS on every push to main
-- **Frontend** — build a web or mobile client that connects to the same Lambda backend
+- **Docker** — containerize the Spring Boot app
 - **BCrypt** — upgrade from SHA-256 to BCrypt for stronger password hashing
 - **Provisioned Concurrency** — eliminate Lambda cold starts for production use
 
