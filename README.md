@@ -177,7 +177,7 @@ the native `crypto.subtle` API, matching the Java implementation exactly.
 
 ---
 
-## What We Learned
+## What I Learned
 
 ### Java
 - Maven project setup and dependency management
